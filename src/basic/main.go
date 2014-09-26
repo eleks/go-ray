@@ -42,7 +42,7 @@ func createScene() []Intersecter {
     surfaceColor: Vector3{0.2, 0.2, 0.2},
     emissionColor: Vector3{},
     transparency: 0,
-    reflection: 0.2,
+    reflection: 0,
   }
 
   objects[1] = &Sphere{
@@ -51,8 +51,8 @@ func createScene() []Intersecter {
     rSqr: 4*4,
     surfaceColor: Vector3{1.0, 0.32, 0.36},
     emissionColor: Vector3{},
-    transparency: 1,
-    reflection: 0.5,
+    transparency: 0.5,
+    reflection: 1,
   }
 
   objects[2] = &Sphere{
@@ -61,8 +61,8 @@ func createScene() []Intersecter {
     rSqr: 2*2,
     surfaceColor: Vector3{0.9, 0.76, 0.46},
     emissionColor: Vector3{},
-    transparency: 1,
-    reflection: 0,
+    transparency: 0,
+    reflection: 1,
   }
 
   objects[3] = &Sphere{
@@ -71,8 +71,8 @@ func createScene() []Intersecter {
     rSqr: 3*3,
     surfaceColor: Vector3{0.65, 0.77, 0.97},
     emissionColor: Vector3{},
-    transparency: 1,
-    reflection: 0,
+    transparency: 0,
+    reflection: 1,
   }
 
   objects[4] = &Sphere{
@@ -81,8 +81,8 @@ func createScene() []Intersecter {
     rSqr: 3*3,
     surfaceColor: Vector3{0.9, 0.9, 0.9},
     emissionColor: Vector3{},
-    transparency: 1,
-    reflection: 0,
+    transparency: 0,
+    reflection: 1,
   }
 
   // light
@@ -110,7 +110,7 @@ func render(width, height int, objects []Intersecter) []*Vector3 {
 
   for y := 0; y < height; y++ {
     for x := 0; x < width; x++ {
-      xx := (2*((float64(x)+0.5)*invWidth) - 1.0)*angle*aspectRatio
+      xx := (2*(float64(x)+0.5)*invWidth - 1.0)*angle*aspectRatio
       yy := (1.0 - 2.0*((float64(y)+0.5)*invHeight))*angle
 
       rayDir := &Vector3{xx, yy, -1}

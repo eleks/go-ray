@@ -3,7 +3,7 @@ package main
 import "math"
 
 const (
-  INFINITY = 1e8
+  INFINITY = 1e16
   MAX_DEPTH = 5
   BIAS = 1e-4
 )
@@ -31,15 +31,16 @@ func trace(rayOrig *Vector3, rayDir *Vector3, objects []Intersecter, depth int) 
   if inside { nhit.negate() }
 
   if (closest.getTransparency() > 0 || closest.getReflection() > 0) && depth < MAX_DEPTH {
-    reflection, fresnelEffect := getReflection(rayDir, phit, nhit, objects, depth)
+    reflection, fresnelEffect := getReflection(rayDir, phit, nhit, objects, depth + 1)
 
     refraction := &Vector3{}
-    if closest.getTransparency() > 0 {
-      refraction = getRefraction(rayDir, phit, nhit, inside, objects, depth)
+    if closest.getTransparency() != 0 {
+      refraction = getRefraction(rayDir, phit, nhit, inside, objects, depth + 1)
     }
 
-    surfaceColor = reflection.mulF(fresnelEffect).add(refraction.mulF((1 - fresnelEffect)*closest.getTransparency()))
-    surfaceColor = surfaceColor.mulV(closest.getSurfaceColor())    
+    reflectionColor := reflection.mulF(fresnelEffect)
+    refractionColor := refraction.mulF((1.0 - fresnelEffect)*closest.getTransparency())
+    surfaceColor = reflectionColor.add(refractionColor).mulV(closest.getSurfaceColor())
   } else {
     // it's a diffuse object, no need to raytrace any further
     for i, obj := range objects {
@@ -59,7 +60,8 @@ func trace(rayOrig *Vector3, rayDir *Vector3, objects []Intersecter, depth int) 
           }
         }
 
-        colorToAdd := closest.getSurfaceColor().mulV(transmission).mulF(math.Max(0, nhit.dot(lightDirection))).mulV(obj.getEmissionColor())
+        max := math.Max(0.0, nhit.dot(lightDirection))
+        colorToAdd := closest.getSurfaceColor().mulV(transmission).mulF(max).mulV(obj.getEmissionColor())
         surfaceColor.addA(colorToAdd)
       }
     }
@@ -70,26 +72,28 @@ func trace(rayOrig *Vector3, rayDir *Vector3, objects []Intersecter, depth int) 
 
 func getRefraction(rayDir, phit, nhit *Vector3, inside bool, objects []Intersecter, depth int) *Vector3 {
   ior := 1.1; eta := ior
-  if inside { eta = 1/ior }
+  if !inside { eta = 1.0/ior }
 
   cos := -nhit.dot(rayDir)
-  k := 1 - eta*eta*(1 - cos*cos)
+  k := 1.0 - eta*eta*(1.0 - cos*cos)
   refractionDir := rayDir.mulF(eta).add(nhit.mulF(eta*cos - math.Sqrt(k)))
-  refraction := trace(phit.sub(nhit.mulF(BIAS)), refractionDir, objects, depth + 1)
+  refractionDir.normalize()
+  refraction := trace(phit.sub(nhit.mulF(BIAS)), refractionDir, objects, depth)
 
   return refraction
 }
 
 func getReflection(rayDir, phit, nhit *Vector3, objects []Intersecter, depth int) (*Vector3, float64) {
-  facingRatio := -rayDir.dot(nhit)
-  fresnelEffect := mix(math.Pow(1 - facingRatio, 3), 1, 0.1)
+  rayDirDotNHit := rayDir.dot(nhit) 
+  facingRatio := -rayDirDotNHit
+  fresnelEffect := mix(math.Pow(1.0 - facingRatio, 3.0), 1.0, 0.1)
 
   // compute reflection direction (not need to normalize because all vectors
   // are already normalized)
-  reflectionDir := rayDir.sub(nhit.mulF(2*rayDir.dot(nhit)))
+  reflectionDir := rayDir.sub(nhit.mulF(2*rayDirDotNHit))
   reflectionDir.normalize()
 
-  reflection := trace(phit.add(nhit.mulF(BIAS)), reflectionDir, objects, depth + 1)
+  reflection := trace(phit.add(nhit.mulF(BIAS)), reflectionDir, objects, depth)
 
   return reflection, fresnelEffect
 }

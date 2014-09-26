@@ -16,9 +16,9 @@ func (v *Vector3) length() float64 {
 }
 
 func (v *Vector3) normalize() {
-  length := v.length()
+  length := v.lengthSqr()
   if length > 0 {
-    inv := 1/length
+    inv := 1.0/math.Sqrt(length)
     v.x *= inv; v.y *= inv; v.z *= inv
   }
 }
