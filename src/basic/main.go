@@ -14,6 +14,9 @@ func main() {
   
   width, height := 640, 480
   vectorImg := render(width, height, objects)
+
+  print("Render finished. Saving... ")
+  
     // save results
   img := image.NewRGBA(image.Rect(0, 0, width, height))
   for i, p := range vectorImg {
@@ -99,6 +102,11 @@ func createScene() []Intersecter {
   return objects
 }
 
+type ResultPair struct {
+  index int
+  color *Vector3
+}
+
 func render(width, height int, objects []Intersecter) []*Vector3 {
   vectorImg := make([]*Vector3, width * height)
   index := 0
@@ -108,6 +116,8 @@ func render(width, height int, objects []Intersecter) []*Vector3 {
   aspectRatio := float64(width) / float64(height)
   angle := math.Tan(math.Pi*0.5*fov/180.0)
 
+  results := make(chan ResultPair)
+
   for y := 0; y < height; y++ {
     for x := 0; x < width; x++ {
       xx := (2*(float64(x)+0.5)*invWidth - 1.0)*angle*aspectRatio
@@ -115,10 +125,24 @@ func render(width, height int, objects []Intersecter) []*Vector3 {
 
       rayDir := &Vector3{xx, yy, -1}
       rayDir.normalize()
-      vectorImg[index] = trace(&Vector3{}, rayDir, objects, 0)
+
+      go func(rd *Vector3, objs []Intersecter, i int, resCh chan ResultPair) {
+        color := trace(&Vector3{}, rd, objs, 0)
+        resCh <- ResultPair{i, color}
+      }(rayDir, objects, index, results)
+      
       index++
     }
   }
 
+  count := 0
+  maxCount := width * height
+  for r := range results {
+    vectorImg[r.index] = r.color
+    count++
+
+    if count == maxCount { break } 
+  }
+  
   return vectorImg
 }
