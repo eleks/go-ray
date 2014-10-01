@@ -43,11 +43,16 @@ func CTraceRays(computator CComputationManager, indicesSize int, raysIndices []i
   return results
 }
 
+func CDeleteComputator(computator CComputationManager) {
+  C.destroyComputator(computator.cm)
+}
+
 func main() {
   width, height := 640, 480
   objects, objectsNumber := createScene()
 
   computator := CCreateComputator(height, width, objects, objectsNumber)
+  defer CDeleteComputator(computator)
 
   vectorImg := render(computator, height, width, objects)
 
