@@ -25,9 +25,9 @@ func CCreateComputator(height, width int, objects []float32, objectsNumber int) 
   return CComputationManager{cm}
 }
 
-func CTraceRays(computator CComputationManager, indicesSize int, raysIndices []int) [][]float32 {
-  indices := (*C.int)(unsafe.Pointer(&raysIndices[0]))
-
+func CTraceRays(computator CComputationManager, startIndex, endIndex int64) [][]float32 {
+  indicesSize := endIndex - startIndex + 1
+  
   results := make([][]float32, indicesSize)
   refResults := make([]*float32, indicesSize)
   
@@ -38,7 +38,7 @@ func CTraceRays(computator CComputationManager, indicesSize int, raysIndices []i
   }
   
   resultsPtr := (**C.float)(unsafe.Pointer((&refResults[0])))
-  C.traceRays(computator.cm, C.int(indicesSize), indices, resultsPtr)
+  C.traceRays(computator.cm, C.longlong(startIndex), C.longlong(endIndex), resultsPtr)
 
   return results
 }
@@ -145,17 +145,6 @@ func packToVector(objects []float32, index int, items ...float32) int {
 }
 
 func render(computator CComputationManager, height, width int, objects []float32) [][]float32 {
-  index := 0
-
-  pairs := make([]int, width*height*2)
-    
-  for y := 0; y < height; y++ {
-    for x := 0; x < width; x++ {
-      pairs[index] = x; pairs[index + 1] = y
-      index += 2
-    }
-  }
-
-  results := CTraceRays(computator, width*height, pairs)
+  results := CTraceRays(computator, 0, int64(width*height - 1))
   return results
 }

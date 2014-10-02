@@ -25,17 +25,20 @@ extern "C" {
       return (void *)computator;
    }
 
-   void traceRays(void *computator, int indicesSize, int *raysIndices, FloatType **results) {
+   void traceRays(void *computator, long long startIndex, long long endIndex, float **results) {
       RayTracerComputator *rt = (RayTracerComputator *)computator;
 
       const std::vector<Intersecter *> sceneObjects = rt->GetSceneObjects();
+      long long width = (long long)rt->GetWidth();
 
-      for (int i = 0; i < indicesSize; ++i) {
-         int *pair = &raysIndices[i*2];
-         int x = pair[0], y = pair[1];
+      int indicesSize = (int)(endIndex - startIndex + 1);
+      long long index = startIndex;
+      
+      for (int i = 0; index < endIndex; ++i, ++index) {
+         long long x = index % width, y = index / width;
 
-         FloatType xx = rt->GetRelativeX(x);
-         FloatType yy = rt->GetRelativeY(y);
+         FloatType xx = rt->GetRelativeX((int)x);
+         FloatType yy = rt->GetRelativeY((int)y);
          Vector3 raydir(xx, yy, -1);
          raydir.normalize();
 

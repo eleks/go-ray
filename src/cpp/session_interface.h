@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
    void *createComputator(int heigth, int width, float angle, int objectsNumber, float *objects);
-   void traceRays(void *computator, int indicesSize, int *raysIndices, float **results);
+   void traceRays(void *computator, long long startIndex, long long endIndex, float **results);
    void destroyComputator(void *computator);
 
 #ifdef __cplusplus
